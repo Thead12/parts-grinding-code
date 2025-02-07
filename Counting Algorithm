@@ -1,0 +1,22 @@
+import numpy as np
+from scipy import signal
+import matplotlib.pyplot as plt
+t = np.linspace(0, 4, 500, endpoint=False)
+
+low_freq = signal.square(2 * np.pi * 0.5 * t) + 2
+high_freq = signal.square(2 * np.pi * 3 * t, duty=0.85) + 1
+combined = high_freq + low_freq
+
+plt.plot(t, combined)
+plt.ylim(0, 7)
+plt.show() 
+
+#step 1: make a check for a static graph as made here
+#step 2: Use FuncAnimation to create a real time plot - use the interval value to generate random numbers on each tick, and make it bias the values up a lot every few seconds
+#step 3: implement a check also utilising interval, somehow, to check if these numbers have exceeded a value for a certain length of "interval time".
+
+#The "Interval" is the common factor between this artificial plot and the real one that will make it transferable (I hope)
+
+#Idea: use a counting system active ALWAYS - if latest generated value is > target value, counter + 1.
+#      If counter reaches (e.g.) 20, "send a clock pulse" (add to another variable to signify a count has been done)
+#      If the latest generated number < target value, AND counter != 0, set counter = 0

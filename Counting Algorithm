@@ -11,7 +11,7 @@ class PartCounter:
         self.y = np.zeros(len(self.t))
         self.rolling_counter = 0
         self.part_count = 0
-        self.duplicate_check = 0
+        self.duplicate_check = False
     
 
     def simulate(self):
@@ -53,6 +53,37 @@ class PartCounter:
 sim1 = PartCounter(10,150)
 sim1.simulate()
 sim1.plot_data()
+
+#Next idea: 
+#Grab a portion of the plotdata_fft array, check if ~95% of the values in the range corresponding to our target frequency range are above the amplitude threshold, increment rolling_counter if so
+def majorityCounting(simtime):
+    rolling_counter = 0
+    part_count = 0
+    duplicate_check = False
+    plotdata_fft = np.zeros(500) # our target frequency range will probably be 4750-5250Hz if being lenient - 50 range here as a smaller simulation
+
+    for i in range(simtime):
+        for i in range (len(plotdata_fft)):
+            plotdata_fft[i] = random.randint(5,10) #instead of one random number per instance, now an array of random numbers per instance 
+        target_avg = np.mean(plotdata_fft[350:400])   #calculate mean value of the target range
+        print(target_avg)
+
+        if target_avg >= 6:     # same checks as before but now on the average of our target range
+            rolling_counter += 1
+
+        elif target_avg < 5 and rolling_counter != 0:
+            rolling_counter = 0
+            duplicate_check = False #part is done, enable part counting again
+
+        if rolling_counter >= 10 and not duplicate_check:
+            part_count += 1
+            rolling_counter = 0
+            duplicate_check = True
+    
+    return print("parts counted = ", part_count)
+
+majorityCounting(10)
+
 
 #Still need to tie this to interval time & actual sample rate
 

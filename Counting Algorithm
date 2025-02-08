@@ -1,22 +1,48 @@
 import numpy as np
-from scipy import signal
 import matplotlib.pyplot as plt
-t = np.linspace(0, 4, 500, endpoint=False)
+from matplotlib.animation import FuncAnimation
+import random
 
-low_freq = signal.square(2 * np.pi * 0.5 * t) + 2
-high_freq = signal.square(2 * np.pi * 3 * t, duty=0.85) + 1
-combined = high_freq + low_freq
+t = np.linspace(1,10, 150)
+y = np.zeros(len(t))
+fig, axis = plt.subplots()
+axis.set_xlim([min(t),max(t)])
+axis.set_ylim(0,11)
+animated_plot, = axis.plot([],[]) 
+plt.hlines(5,0,len(t),color="red")
 
-plt.plot(t, combined)
-plt.ylim(0, 7)
-plt.show() 
+rolling_counter = 0
+part_count = 0
+duplicate_check = 0
 
-#step 1: make a check for a static graph as made here
+for i in range(len(t)):
+    if (i > 10 and i < 50) or (i > 80 and i < 120): # Simulation of time periods where the part is being grinded
+        y[i] = random.randint(6,10)
+    else:
+         y[i] = random.randint(1,4)
+
+    if y[i] >= 5:                   
+        rolling_counter += 1
+
+    elif y[i] < 5 and rolling_counter != 0:
+        rolling_counter = 0
+        duplicate_check = 0 #part is done, enable part counting again
+
+    if rolling_counter >= 10 and duplicate_check == 0: # sets how strict we want to be
+        part_count += 1
+        rolling_counter = 0
+        duplicate_check = 1 # don't count again if counter hits 10, stops multiple counts for one part
+
+def update_data(frame):
+    animated_plot.set_data(t[:frame], y[:frame])
+    return animated_plot,
+
+animation = FuncAnimation(fig=fig, func=update_data, frames=len(t), interval=25, repeat=False)
+print("parts counted = ", part_count)
+
+plt.show()
+
 #step 2: Use FuncAnimation to create a real time plot - use the interval value to generate random numbers on each tick, and make it bias the values up a lot every few seconds
 #step 3: implement a check also utilising interval, somehow, to check if these numbers have exceeded a value for a certain length of "interval time".
 
 #The "Interval" is the common factor between this artificial plot and the real one that will make it transferable (I hope)
-
-#Idea: use a counting system active ALWAYS - if latest generated value is > target value, counter + 1.
-#      If counter reaches (e.g.) 20, "send a clock pulse" (add to another variable to signify a count has been done)
-#      If the latest generated number < target value, AND counter != 0, set counter = 0

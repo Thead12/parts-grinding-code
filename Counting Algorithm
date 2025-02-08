@@ -3,46 +3,58 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import random
 
-t = np.linspace(1,10, 150)
-y = np.zeros(len(t))
-fig, axis = plt.subplots()
-axis.set_xlim([min(t),max(t)])
-axis.set_ylim(0,11)
-animated_plot, = axis.plot([],[]) 
-plt.hlines(5,0,len(t),color="red")
+class PartCounter:
+    def __init__(self, simtime, samples):
+        self.simtime = simtime 
+        self.samples = samples
+        self.t = np.linspace(0,self.simtime,self.samples)
+        self.y = np.zeros(len(self.t))
+        self.rolling_counter = 0
+        self.part_count = 0
+        self.duplicate_check = 0
+    
 
-rolling_counter = 0
-part_count = 0
-duplicate_check = 0
+    def simulate(self):
+        for i in range(len(self.t)):
+            if (i > 10 and i < 50) or (i > 80 and i < 120):
+                self.y[i] = random.randint(6, 10)
+            else:
+                self.y[i] = random.randint(1, 4)
 
-for i in range(len(t)):
-    if (i > 10 and i < 50) or (i > 80 and i < 120): # Simulation of time periods where the part is being grinded
-        y[i] = random.randint(6,10)
-    else:
-         y[i] = random.randint(1,4)
+            self.update_part_count(self.y[i])
+    
+    def update_part_count(self, value):
+        if value >= 5:
+            self.rolling_counter += 1
+        elif value < 5 and self.rolling_counter != 0:
+            self.rolling_counter = 0
+            self.duplicate_check = False #part is done, enable part counting again
 
-    if y[i] >= 5:                   
-        rolling_counter += 1
+        if self.rolling_counter >= 10 and not self.duplicate_check:
+            self.part_count += 1
+            self.rolling_counter = 0
+            self.duplicate_check = True
+    
+    def plot_data(self):
+        fig, axis = plt.subplots()
+        axis.set_xlim([min(self.t), max(self.t)])
+        axis.set_ylim(0, (max(self.y) + 1))
+        line, = axis.plot([], []) 
+        axis.hlines(5, min(self.t), max(self.t), color="red") 
 
-    elif y[i] < 5 and rolling_counter != 0:
-        rolling_counter = 0
-        duplicate_check = 0 #part is done, enable part counting again
+        def animate(frame):
+            line.set_data(self.t[:frame], self.y[:frame])
+            return line,  
 
-    if rolling_counter >= 10 and duplicate_check == 0: # sets how strict we want to be
-        part_count += 1
-        rolling_counter = 0
-        duplicate_check = 1 # don't count again if counter hits 10, stops multiple counts for one part
+        animation = FuncAnimation(fig, animate, frames=len(self.t), interval=10, repeat=False)
+        print("parts counted =", self.part_count)
+        plt.show()
 
-def update_data(frame):
-    animated_plot.set_data(t[:frame], y[:frame])
-    return animated_plot,
+sim1 = PartCounter(10,150)
+sim1.simulate()
+sim1.plot_data()
 
-animation = FuncAnimation(fig=fig, func=update_data, frames=len(t), interval=25, repeat=False)
-print("parts counted = ", part_count)
-
-plt.show()
-
-#step 2: Use FuncAnimation to create a real time plot - use the interval value to generate random numbers on each tick, and make it bias the values up a lot every few seconds
-#step 3: implement a check also utilising interval, somehow, to check if these numbers have exceeded a value for a certain length of "interval time".
+#Still need to tie this to interval time & actual sample rate
 
 #The "Interval" is the common factor between this artificial plot and the real one that will make it transferable (I hope)
+

@@ -6,12 +6,19 @@ import sounddevice as sd
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
+# Constants
+DOWNSAMPLE = 5
+MIN_FREQ = 1000
+MAX_FREQ = 1500
+AMPLITUDE_THRESHOLD = 0.5
+TIME_THRESHOLD = 100
+
 # Argument parsing
 def parse_arguments():
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--device', type=int, help='Input device ID')
     parser.add_argument('-r', '--samplerate', type=float, help='Sampling rate')
-    parser.add_argument('-n', '--downsample', type=int, default=5, help='Downsampling factor')
+    parser.add_argument('-n', '--downsample', type=int, default=DOWNSAMPLE, help='Downsampling factor')
     return parser.parse_args()
 
 # Audio callback function
@@ -27,7 +34,7 @@ def update_plot(frame):
         data = q.get()
         shift = len(data)
         plotdata = np.roll(plotdata, -shift, axis=0)
-        plotdata[-shift:] = data  # Keep consistent shape
+        plotdata[-shift:] = data
     line.set_ydata(plotdata)
     return line,
 
@@ -36,7 +43,25 @@ def update_plot_fft(frame):
     global plotdata_fft
     plotdata_fft = np.abs(np.fft.fft(plotdata))[:len(plotdata)//2]  # Only take positive frequencies
     line_fft.set_ydata(plotdata_fft)
+    check_part(plotdata_fft, min_index, max_index, AMPLITUDE_THRESHOLD, TIME_THRESHOLD)
     return line_fft,
+
+# Counting algorithm
+def check_part(fft_data, min_index, max_index, amplitude_threshold, time_threshold):
+    global part_count, rolling_counter, duplicate_check
+    target_avg = np.mean(fft_data[min_index:max_index])
+
+    if target_avg >= amplitude_threshold:
+        if not duplicate_check:  # Only increment if not already counted
+            rolling_counter += 1
+            if rolling_counter >= time_threshold:
+                part_count += 1
+                rolling_counter = 0
+                duplicate_check = True
+                print(part_count)
+    else:
+        rolling_counter = 0
+        duplicate_check = False # Reset flag while below threshold
 
 # Initialize parameters
 args = parse_arguments()
@@ -47,11 +72,24 @@ plot_length = int(200 * samplerate / (1000 * args.downsample))
 plotdata = np.zeros(plot_length)  # Ensure it's 1D
 plotdata_fft = np.zeros(plot_length // 2)  # FFT has half the size (positive frequencies)
 
+part_count = 0
+rolling_counter = 0
+duplicate_check = False
+
+
 # Calculate the effective sampling rate after downsampling
 effective_samplerate = samplerate / args.downsample
+print("Effective samplerate:", effective_samplerate)
+
+convert_to_index = len(plotdata_fft) / (effective_samplerate / 2)
+min_index = round(MIN_FREQ * convert_to_index)
+max_index = round(MAX_FREQ * convert_to_index)
+print("min and max indices:", (min_index, max_index))
+
 
 # Calculate corresponding frequency bins for FFT (positive frequencies only)
 frequencies = np.fft.fftfreq(len(plotdata), 1/effective_samplerate)[:len(plotdata)//2]
+print("real frequencies:", (frequencies[min_index], frequencies[max_index]))
 
 # First window (Time-domain plot)
 fig1 = plt.figure(num=1)
@@ -76,13 +114,17 @@ tick_labels = [f'{frequencies[i]:.0f}' for i in tick_positions]  # Map these to 
 # Set x-ticks and labels
 ax2.set_xticks(frequencies[tick_positions])  # Set the x-ticks to the actual frequency values
 
+ax2.annotate(" ", xy=(MIN_FREQ, 0), xytext=(MIN_FREQ, 5), arrowprops=dict(facecolor='black', shrink=0.05))
+ax2.annotate(" ", xy=(MAX_FREQ, 0), xytext=(MAX_FREQ, 5), arrowprops=dict(facecolor='black', shrink=0.05))
 ax2.set_ylim(0, 50)
 
 # Start audio stream
 stream = sd.InputStream(device=args.device, samplerate=samplerate, channels=1, callback=audio_callback)
 
-ani1 = FuncAnimation(fig1, update_plot, interval=10, blit=True, cache_frame_data=False)
-ani2 = FuncAnimation(fig2, update_plot_fft, interval=10, blit=True, cache_frame_data=False)
+ani1 = FuncAnimation(fig1, update_plot, interval=20, blit=True, cache_frame_data=False)
+ani2 = FuncAnimation(fig2, update_plot_fft, interval=20, blit=True, cache_frame_data=False)
 
 with stream:
     plt.show(block=True)  # Keep both windows open
+
+print("Final:", part_count)

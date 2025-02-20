@@ -9,7 +9,7 @@ from matplotlib.animation import FuncAnimation
 # Constants
 DOWNSAMPLE = 5
 MIN_FREQ = 1000
-MAX_FREQ = 1500
+MAX_FREQ = 1200
 AMPLITUDE_THRESHOLD = 0.5
 TIME_THRESHOLD = 100
 

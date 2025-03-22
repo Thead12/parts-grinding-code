@@ -7,7 +7,7 @@ while True:
     #Checks to see if grinding machine is online - its Raspberry Pi will have an IP address
     counting_is_running = False
     while counting_is_running is False:
-        hosts = multiping(['158.125.93.1'], interval=5)
+        hosts = multiping(['158.125.93.1'], interval=5) #replace with counting machine Raspberry Pi's IP address
         for host in hosts:
             if host.is_alive:
                 print(f'--- {host.address} is up! ---')

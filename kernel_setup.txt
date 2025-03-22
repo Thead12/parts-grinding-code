@@ -1,0 +1,21 @@
+#To run a script on startup, run it as a kernel service:
+
+touch /etc/systemd/system/ip_autoping.service #creates empty file, navigate there with:
+sudo nano /etc/systemd/system/ip_autoping.service
+
+#Enter details of the service:
+
+---
+[Unit]
+Description=Upon startup of the Pi, runs the IP checker script to look out when to run the counting script
+
+[Service]
+ExecStart=/usr/bin/python3 /path/networktest.py
+
+[Install]
+WantedBy=multi-user.target
+----
+
+#Now run it with:
+sudo systemctl start ip_autoping #Runs the networktest script now
+sudo systemctl enable ip_autoping #Sets the networktest script to run every boot

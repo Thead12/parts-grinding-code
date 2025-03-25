@@ -1,3 +1,8 @@
+#this is gonna change for the MQTT version
+
+#Install necessary packages with:
+
+
 #To run a script on startup, run it as a kernel service:
 
 touch /etc/systemd/system/ip_autoping.service #creates empty file, navigate there with:

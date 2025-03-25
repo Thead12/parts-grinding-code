@@ -4,3 +4,4 @@ Python library for managing long running tasks, we can use this to initialise an
 https://supervisord.org/
 
 UPDATE AT THE END TO BE A PROFESSIONAL README
+Need to include instructions for setting up the file directories as I have them in the kernel_setup.txt file else the configs will break

@@ -1,7 +1,11 @@
-#this is gonna change for the MQTT version
+#LINUX CMD INSTRUCTIONS TO SETUP A NEW RASPBERRY PI TO BE USED AS A PART COUNTER
+
+
+
+#Note to LISI: The packages are for the IP address prototype script. For running MQTT with Python, install paho-mqtt 
 
 #Install necessary packages with:
-
+sudo apt install python3-icmplib
 
 #To run a script on startup, run it as a kernel service:
 
@@ -24,3 +28,18 @@ WantedBy=multi-user.target
 #Now run it with:
 sudo systemctl start ip_autoping #Runs the networktest script now
 sudo systemctl enable ip_autoping #Sets the networktest script to run every boot
+sudo systemctl status ip_autoping #to check if it has worked
+
+#To conigure the raspberry pi to the LISI network without a GUI, create a wpa_supplicant file:
+
+sudo nano /etc/wpa_supplicant/wpa_supplicant.conf
+
+#Inside the conf file:
+---
+network={
+    ssid="MANUFACTURING"
+    psk="5Lp*RZo8fzr@NbU"
+    key_mgmt=WPA-PSK
+}
+---
+iwconfig #to check upon reboot if the wireless connection was successful

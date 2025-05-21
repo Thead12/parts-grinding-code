@@ -4,7 +4,7 @@ from datetime import datetime
 import time
 import threading
 import numpy as np
-from gpiozero import MCP3202
+from gpiozero import MCP3202, LED
 import joblib
 from CircularBuffer import CircularBuffer
 import queue
@@ -47,9 +47,12 @@ def classify_vibration(features, kmeans_model, grinding_cluster):
 
 # Function to handle classification in a separate thread
 def classify_data(data_queue, kmeans_model, grinding_cluster):
+    voltage_output = LED(17)
     try:
         grinding_count = 0
         was_grinding = False
+        grinding_for = 0
+        not_grinding_for = 0
         while True:
             # Get data from the queue for classification
             data = data_queue.get()  # Blocks until there's data
@@ -58,19 +61,32 @@ def classify_data(data_queue, kmeans_model, grinding_cluster):
         
             # Extract features from the vibration data
             features = extract_features(data, 10000)
-        
+                    
             # Classify the current signal
             is_grinding = classify_vibration(features, kmeans_model, grinding_cluster)
-        
+            
             # Handle classification result
             if is_grinding:
                 print("Grinding detected!")
-                if not was_grinding:  # Transition from idle to grinding
+                grinding_for+=1
+                if not was_grinding and grinding_for >= 30:
+                    voltage_output.on()
+                    not_grinding_for = 0
+                    #voltage_output.on()
                     grinding_count += 1
                     print(f"Part count: {grinding_count}")
-                was_grinding = True
+                    grinding_for = 0
+                    was_grinding = True
+                    #voltage_output.off()
+                #elif grinding_for >= 30:
+                    #grinding_for = 0
             else:
-                was_grinding = False
+                print("Machine Idle!")
+                not_grinding_for += 1
+                if not_grinding_for >=5:
+                    voltage_output.off()
+                    grinding_for = 0
+                    was_grinding = False
     except KeyboardInterrupt:
         pass
     finally:
@@ -78,7 +94,7 @@ def classify_data(data_queue, kmeans_model, grinding_cluster):
 
 if __name__ == '__main__':
     try:
-        buffer_size = 1000  # Circular buffer size
+        buffer_size = 700  # Circular buffer size
         buffer = CircularBuffer(buffer_size)
 
         # Load trained K-Means model and grinding cluster information

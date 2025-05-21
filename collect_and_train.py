@@ -27,18 +27,29 @@ def extract_features(buffer, fs):
     spectral_entropy = entropy(spectrum / np.sum(spectrum))
     rms_amplitude = np.sqrt(np.mean(np.array(buffer) ** 2))
 
-    return [spectral_energy, peak_freq, spectral_entropy, rms_amplitude]
+    features = [spectral_energy, peak_freq, spectral_entropy, rms_amplitude]
+
+    return features 
 
 
 def identify_labels(kmeans_model, feature_vectors, labels):
     # Calculate average spectral energy for each cluster
     unique_clusters = np.unique(labels)
+    
     cluster_energies = [
         np.mean([fv[0] for i, fv in enumerate(feature_vectors) if labels[i] == c])
         for c in unique_clusters
     ]
-
-    # The cluster with the highest spectral energy is likely grinding
+    
+    """
+    cluster_rms = [
+        np.mean([fv[3] for i, fv in enumerate(feature_vectors) if labels[i] == c])
+        for c in unique_clusters
+    ]
+    """
+    
+    print(cluster_energies)
+    
     grinding_cluster = unique_clusters[np.argmax(cluster_energies)]
 
     return grinding_cluster
@@ -51,6 +62,7 @@ def classify_vibration(signal, kmeans_model, grinding_cluster, fs):
     # predict cluster
     cluster = kmeans_model.predict([feature_vector])[0]
 
+    print(int(cluster))
     # return grinding detection
     return int(cluster == grinding_cluster)
 
@@ -91,7 +103,7 @@ if __name__ == '__main__':
         print("Extracted")
 
         # Train k-means
-        kmeans_model = KMeans(n_clusters=2, random_state=42)
+        kmeans_model = KMeans(n_clusters=3, random_state=42)
         kmeans_model.fit(feature_vectors)  # Fit the model
         labels = kmeans_model.labels_  # Get the labels from the model
 

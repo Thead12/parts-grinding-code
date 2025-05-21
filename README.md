@@ -45,11 +45,6 @@ parts-grinding-code/
    pip install -r requirements.txt
    ```
 
-4. **Set up the file directories:**
-
-   Refer to `kernel_setup.txt` for detailed instructions on setting up the necessary file directories.
-   Proper configuration is essential for the scripts to function correctly.
-
 ## 🧪 Usage
 
 ### Collecting Data and Training the Model

@@ -41,8 +41,6 @@ parts-grinding-code/
 
 3. **Install the required packages:**
 
-   > Create a `requirements.txt` file listing all dependencies for easier installation.
-
    ```bash
    pip install -r requirements.txt
    ```

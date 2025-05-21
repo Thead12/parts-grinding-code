@@ -80,6 +80,7 @@ python real_time_graphs.py
 
 The project utilizes `CircularBuffer.py` to manage data streams efficiently.
 Ensure that all configurations are set as per the guidelines in `kernel_setup.txt`.
+`networktest.py` can be updated from IP addresses to work with MQTT frameworks to automatically run the other scripts when the grinding machine changes state.
 
 ## 📄 License
 
